@@ -14,13 +14,10 @@ namespace DNSecurityAPI
             return key;
         }
 
-        public static void Hexdump(Packet packet, bool S_C)
+        public static void Hexdump(Packet packet, bool S_C, bool udp = false)
         {
             var bytes = packet.GetBytes();
-            if (S_C)
-                Console.WriteLine($"[S -> C] [{packet.Opcode1.ToString("X2")}-{packet.Opcode2.ToString("X2")}] [{bytes.Length} bytes]");
-            else
-                Console.WriteLine($"[C -> S] [{packet.Opcode1.ToString("X2")}-{packet.Opcode2.ToString("X2")}] [{bytes.Length} bytes]");
+            Console.WriteLine("[{0}] [{1:X2}-{2:X2}] [{3} bytes] [{4}]", S_C ? "S -> C" : "C -> S", packet.Opcode1, packet.Opcode2, bytes.Length, udp ? "UDP" : "TCP");
 
             for (int i = 0; i < bytes.Length; i += 16)
             {
@@ -76,6 +73,47 @@ namespace DNSecurityAPI
                 Console.WriteLine($"{i.ToString("x6")}: {hexBytes}    {strdump}");
             }
             Console.WriteLine();
+        }
+
+        public static byte[] HexdumpBytes(Packet packet)
+        {
+            return HexdumpBytes(packet.GetBytes());
+        }
+
+        public static byte[] HexdumpBytes(byte[] bytes)
+        {
+            using (var memStream = new System.IO.MemoryStream())
+            {
+                using (var bwriter = new System.IO.BinaryWriter(memStream))
+                {
+                    for (int i = 0; i < bytes.Length; i += 16)
+                    {
+                        string strdump = "";
+                        string hexBytes = "";
+                        for (int j = 0; j < 16; j++)
+                        {
+                            if (i + j >= bytes.Length)
+                            {
+                                strdump += " ";
+                                hexBytes += "   ";
+                            }
+                            else
+                            {
+                                if (!char.IsControl((char)bytes[i + j]))
+                                    strdump += (char)bytes[i + j];
+                                else
+                                    strdump += ".";
+
+                                hexBytes += bytes[i + j].ToString("X2") + " ";
+                            }
+
+                        }
+                        bwriter.Write($"{i.ToString("x6")}: {hexBytes}    {strdump}" + Environment.NewLine);
+                    }
+                    bwriter.Write(Encoding.ASCII.GetBytes("\n"), 0, 1);
+                    return memStream.ToArray();
+                }
+            }
         }
     }
 }

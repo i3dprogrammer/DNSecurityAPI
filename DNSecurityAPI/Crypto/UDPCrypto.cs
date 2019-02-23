@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace DNSecurityAPI.Crypto
 {
-    internal class UDPCrypto
+    public class UDPCrypto
     {
         public static byte[] Encrypt(byte[] data)
         {
